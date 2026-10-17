@@ -26,6 +26,20 @@ cp .env.example .env   # then set ETHERSCAN_API_KEY
 
 The script keeps the decoded logs in `data/<SYMBOL>.csv`. It keeps the time window, the block window and the feed decimals in `data/<SYMBOL>.meta.json`. It writes the results to `output/<SYMBOL>/`.
 
+## Notebook
+
+`research.ipynb` examines each feed in a separate section. It reads the logs in `data/`, so run `main.py` first. For each feed, the notebook shows these items:
+
+- For each session type, one plot of the prices and one plot of the absolute price changes.
+- The mean, the standard deviation, the minimum and the maximum of the absolute price change for each session type.
+- The same statistics for each transition type.
+- The zero answers and the unchanged runs, for each session type and for each session.
+
+```bash
+.venv/bin/pip install jupyterlab
+.venv/bin/jupyter lab research.ipynb   # start Jupyter from the repository root
+```
+
 ## Sessions
 
 The session times come from the [Chainlink documentation](https://docs.chain.link/data-feeds/tokenized-equity-feeds#session-coverage). The script uses the `America/New_York` time zone. This time zone applies the daylight saving time changes.
@@ -84,4 +98,5 @@ src/etherscan.py   Etherscan client: request interval, retries with backoff, blo
 src/events.py      AnswerUpdated ABI, topic0, log decoding
 src/sessions.py    session calendar and session labels
 src/analysis.py    statistics
+research.ipynb     notebook: plots and statistics for each feed
 ```

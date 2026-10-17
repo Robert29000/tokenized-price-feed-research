@@ -5,3 +5,5 @@ eth-hash[pycryptodome]>=0.7
 eth-abi>=5.0
 pandas>=2.2
 exchange_calendars>=4.5
+matplotlib>=3.9
+ipykernel>=6.29
