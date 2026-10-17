@@ -63,34 +63,41 @@ def session_type_summary(prices: pd.DataFrame, stats: pd.DataFrame) -> pd.DataFr
     return out.reset_index()
 
 
-def _transition_category(from_type: str, to_type: str) -> str:
-    if from_type in config.CLOSED_SESSIONS and to_type not in config.CLOSED_SESSIONS:
-        return f"{from_type}_to_workday"
-    if to_type in config.CLOSED_SESSIONS:
-        return "closure_start"
-    return "intraday"
-
-
 def transitions(prices: pd.DataFrame, stats: pd.DataFrame, calendar: pd.DataFrame) -> pd.DataFrame:
     """Price change across every session boundary: last update before vs first update after it.
 
-    Weekend/holiday re-opens are categorised as weekend_to_workday / holiday_to_workday.
+    A weekend/holiday closure gives one row, post_market->overnight (weekend|holiday). Its price_before is the last
+    update before the closure starts, so updates inside the closure are not used. A closure that the window cuts
+    gives no row.
     """
     times = prices["updated_at_utc"]
     first_in_session = prices.groupby("session_id").head(1).set_index("session_id")
     n_updates = stats.set_index("session_id")["n_updates"]
+    sessions = list(calendar.itertuples())
 
     rows = []
-    for prev, cur in zip(calendar.itertuples(), calendar.iloc[1:].itertuples()):
+    for i in range(1, len(sessions)):
+        prev, cur = sessions[i - 1], sessions[i]
+        if cur.is_closed:
+            continue  # the closure row is made at the reopen
         boundary = cur.start_utc
-        before_idx = times.searchsorted(boundary, side="left") - 1
+        if prev.is_closed:
+            if i < 2:
+                continue  # the window starts inside the closure: no price before it
+            from_session, cutoff = sessions[i - 2], prev.start_utc
+            transition_type = f"{from_session.session_type}->{cur.session_type} ({prev.session_type})"
+            category = "closure"
+        else:
+            from_session, cutoff = prev, boundary
+            transition_type = f"{prev.session_type}->{cur.session_type}"
+            category = "intraday"
+        before_idx = times.searchsorted(cutoff, side="left") - 1
         before = prices.iloc[before_idx] if before_idx >= 0 else None
         after = first_in_session.loc[cur.session_id] if cur.session_id in first_in_session.index else None
-        category = _transition_category(prev.session_type, cur.session_type)
         row = {
-            "transition_type": f"{prev.session_type}->{cur.session_type}",
+            "transition_type": transition_type,
             "category": category,
-            "from_session_id": prev.session_id,
+            "from_session_id": from_session.session_id,
             "to_session_id": cur.session_id,
             "boundary_et": cur.start_et,
             "price_before": before["price"] if before is not None else np.nan,
