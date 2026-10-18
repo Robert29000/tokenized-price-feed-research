@@ -75,7 +75,8 @@ def build_session_calendar(start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFra
 def label_sessions(prices: pd.DataFrame, calendar: pd.DataFrame) -> pd.DataFrame:
     """Attaches session_id, session_type and trading_date to each update via its updatedAt time."""
     labeled = pd.merge_asof(
-        prices.sort_values("updated_at_utc"),
+        # Stable sort: rounds that share an updatedAt (same block) keep their round order.
+        prices.sort_values("updated_at_utc", kind="stable"),
         calendar[["start_utc", "session_id", "session_type", "trading_date"]],
         left_on="updated_at_utc",
         right_on="start_utc",

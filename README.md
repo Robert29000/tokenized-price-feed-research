@@ -34,6 +34,9 @@ The script keeps the decoded logs in `data/<SYMBOL>.csv`. It keeps the time wind
 - The mean, the standard deviation, the minimum and the maximum of the absolute price change for each session type.
 - The same statistics for each transition type, and a list of all weekend closures and holiday closures.
 - The zero answers and the unchanged runs, for each session type and for each session.
+- The update rate and the implied volatility for each session type and each closure transition type, and a check of the threshold and the heartbeat. The section "Update rate and implied volatility: formulas" gives the formulas. Only NVDA, GOOGL and TSLA have this part.
+
+At the end, the notebook compares NVDA, GOOGL and TSLA in the section "Overall statistics" and gives the "Key findings".
 
 ```bash
 .venv/bin/pip install jupyterlab
